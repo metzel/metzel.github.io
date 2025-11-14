@@ -167,7 +167,7 @@ async function generateWithMeshy(prompt) {
 
   showLoading(true);
 
-  const createResp = await fetch("https://api.meshy.ai/openapi/v2/text-to-3d", {
+  const createResp = await fetch("http://localhost:3000/meshy/text-to-3d", {
     method: "POST",
     headers: {
       "Authorization": "Bearer " + MESHY_API_KEY,
@@ -235,7 +235,9 @@ async function loadMeshyModelWithRetry(viewer, url, fname) {
     await new Promise(r => setTimeout(r, d));
 
     try {
-      await viewer.load(url, fname);
+      <!--await viewer.load(url, fname);-->
+        viewer.load("http://localhost:3000/file?url=" + encodeURIComponent(modelUrl), "model.glb")
+
       console.log("Mesh loaded after retry attempt", i+1);
       return true;
     } catch (err) {
