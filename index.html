@@ -9,51 +9,51 @@
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 
 <style>
-    body {
-        font-family: system-ui, sans-serif;
-        margin:0;
-        padding:20px;
-        background:#f2f2f2;
-    }
-    .step {
-        display:none;
-        background:white;
-        padding:20px;
-        border-radius:10px;
-        border:1px solid #ddd;
-        margin-bottom:20px;
-    }
-    .active { display:block; }
-    .btn {
-        padding:10px 18px;
-        background:#1976d2;
-        border:none;
-        border-radius:30px;
-        color:white;
-        cursor:pointer;
-        margin-top:15px;
-        font-weight:600;
-    }
-    .btn[disabled] {
-        background:#999;
-        cursor:not-allowed;
-    }
-    .color-swatch {
-        width:35px; height:35px;
-        border-radius:6px;
-        border:2px solid transparent;
-        cursor:pointer;
-    }
-    .color-selected { border:3px solid black; }
-    canvas {
-        width:100%;
-        height:360px;
-        border:1px solid #ccc;
-        border-radius:10px;
-        margin-top:10px;
-    }
+  body {
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: #f2f2f2;
+  }
+  .step {
+    display: none;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+  }
+  .active { display: block; }
+  .btn {
+    padding: 10px 18px;
+    background: #1976d2;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: 600;
+  }
+  .btn[disabled] {
+    background: #999;
+    cursor: not-allowed;
+  }
+  .color-swatch {
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+  .color-selected { border: 3px solid black; }
+  canvas {
+    width: 100%;
+    height: 360px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    margin-top: 10px;
+  }
 </style>
-
 </head>
 <body>
 
@@ -61,20 +61,338 @@
 
 <!-- STEP 1 -->
 <div id="step1" class="step active">
-    <h2>Step 1 — Create Base Shape</h2>
+  <h2>Step 1 — Create Base Shape</h2>
 
-    <h3>AI Generator</h3>
-    <textarea id="aiPrompt" rows="4" style="width:100%;"></textarea>
-    <button id="btnGenerate" class="btn">Generate with AI</button>
+  <h3>AI Generator</h3>
+  <textarea id="aiPrompt" rows="4" style="width:100%;"></textarea>
+  <button id="btnGenerate" class="btn">Generate with AI</button>
 
-    <h3>or Upload File</h3>
-    <input type="file" id="fileUpload" accept=".stl,.obj,.glb,.gltf">
+  <h3>or Upload File</h3>
+  <input type="file" id="fileUpload" accept=".stl,.obj,.glb,.gltf">
 
-    <h3>Preview</h3>
-    <canvas id="viewer1"></canvas>
+  <h3>Preview</h3>
+  <canvas id="viewer1"></canvas>
 
-    <button id="btnNext1" class="btn" disabled>Next →</button>
+  <button id="btnNext1" class="btn" disabled>Next →</button>
 </div>
 
 <!-- STEP 2 -->
-<div id="step2" class
+<div id="step2" class="step">
+  <h2>Step 2 — Verify Model</h2>
+
+  <canvas id="viewer2"></canvas>
+
+  <button id="btnTryAgain" class="btn" style="background:#666;">← Try Again</button>
+  <button id="btnAccept" class="btn">Accept →</button>
+</div>
+
+<!-- STEP 3 -->
+<div id="step3" class="step">
+  <h2>Step 3 — Finalize Toy</h2>
+
+  <h3>Name Your Design</h3>
+  <input id="designName" style="padding:6px;width:100%;">
+
+  <h3>Marketplace</h3>
+  <p>
+    Users can purchase your toy. You earn $2.50 per sale.
+  </p>
+  <label><input type="checkbox" id="marketplace"> Include in marketplace</label>
+
+  <h3>Color</h3>
+  <div id="colorPicker" style="display:flex;gap:10px;"></div>
+
+  <h3>Size</h3>
+  Width <input id="widthInput" type="number" style="width:90px"> mm<br>
+  Height <input id="heightInput" type="number" style="width:90px"> mm<br>
+  Length <input id="lengthInput" type="number" style="width:90px"> mm<br>
+
+  <h3>Preview</h3>
+  <canvas id="viewer3"></canvas>
+
+  <button id="btnFinish" class="btn">Finish →</button>
+</div>
+
+<!-- STEP 4 -->
+<div id="step4" class="step">
+  <h2>Step 4 — Payment</h2>
+
+  <p>Demo checkout page.</p>
+  <input placeholder="Cardholder Name"><br><br>
+  <input placeholder="Card Number"><br><br>
+  <input placeholder="MM/YY"> <input placeholder="CVC"><br><br>
+
+  <button class="btn">Submit</button>
+</div>
+
+<script>
+/* ------------------------------------------
+   STATE & CONSTANTS
+------------------------------------------ */
+const MESHY_API_KEY = "msy_oBJGNsypCUR4qiloACuPKGweRBH5CRclbyb3";
+
+let modelUrl = null;
+let fileName = null;
+let scaleFactor = 1;
+let selectedColor = "#ff4b4b";
+
+const baseDims = { width: 100, height: 100, length: 150 };
+
+const COLORS = [
+  "#ff4b4b","#2962ff","#2e7d32","#ffeb3b",
+  "#ff9800","#8e24aa","#000000","#ffffff"
+];
+
+function go(stepId) {
+  ["step1","step2","step3","step4"]
+    .forEach(id => document.getElementById(id).classList.remove("active"));
+  document.getElementById(stepId).classList.add("active");
+}
+
+/* ------------------------------------------
+   MESHY AI — TEXT-TO-3D
+------------------------------------------ */
+async function generateWithMeshy(prompt) {
+  console.log("Creating Meshy task…");
+
+  const createResp = await fetch("https://api.meshy.ai/openapi/v2/text-to-3d", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + MESHY_API_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      prompt,
+      mode: "preview",
+      target_polycount: 30000,
+      topology: "triangle",
+      symmetry_mode: "auto",
+      art_style: "sculpture",
+      ai_model: "latest"
+    })
+  });
+
+  if (!createResp.ok) {
+    const txt = await createResp.text();
+    console.error("Meshy create error:", createResp.status, txt);
+    throw new Error("Meshy create failed: " + createResp.status);
+  }
+
+  const createJson = await createResp.json();
+  console.log("CreateTask Response:", createJson);
+
+  const taskId = createJson.result;
+  if (!taskId) throw new Error("No Task ID returned from Meshy");
+
+  console.log("Task ID:", taskId);
+
+  // Poll for task completion
+  while (true) {
+    await new Promise(r => setTimeout(r, 4000));
+
+    const pollRes = await fetch(
+      "https://api.meshy.ai/openapi/v2/text-to-3d/" + taskId,
+      { headers: { "Authorization": "Bearer " + MESHY_API_KEY } }
+    );
+
+    if (!pollRes.ok) {
+      const txt = await pollRes.text();
+      console.error("Meshy poll error:", pollRes.status, txt);
+      throw new Error("Meshy poll failed: " + pollRes.status);
+    }
+
+    const pollJson = await pollRes.json();
+    console.log("Polling:", pollJson);
+
+    if (pollJson.status === "SUCCEEDED") {
+      if (!pollJson.model_urls || !pollJson.model_urls.glb) {
+        throw new Error("Meshy SUCCEEDED but no GLB URL provided");
+      }
+      return pollJson.model_urls.glb;
+    }
+
+    if (pollJson.status === "FAILED") {
+      throw new Error("Meshy AI failed: " + JSON.stringify(pollJson));
+    }
+  }
+}
+
+/* ------------------------------------------
+   BABYLON VIEWER FACTORY
+------------------------------------------ */
+function createViewer(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const engine = new BABYLON.Engine(canvas, true);
+  const scene = new BABYLON.Scene(engine);
+
+  const camera = new BABYLON.ArcRotateCamera(
+    "cam",
+    Math.PI / 2,
+    Math.PI / 3,
+    4,
+    BABYLON.Vector3.Zero(),
+    scene
+  );
+  camera.attachControl(canvas, true);
+
+  new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0,1,0), scene);
+
+  let mesh = null;
+
+  async function load(url, fname) {
+    if (mesh) mesh.dispose();
+
+    let finalUrl = url;
+    if (fname) {
+      // critical for blob URLs: preserves extension for loader
+      finalUrl = url + "#" + fname;
+    }
+
+    console.log("Loading model:", finalUrl);
+
+    if (!url) {
+      mesh = BABYLON.MeshBuilder.CreateTorusKnot("placeholder", {}, scene);
+    } else {
+      const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", finalUrl, scene);
+      mesh = result.meshes[0];
+    }
+
+    apply();
+  }
+
+  function apply() {
+    if (!mesh) return;
+
+    const mat = new BABYLON.StandardMaterial("mat", scene);
+    mat.diffuseColor = BABYLON.Color3.FromHexString(selectedColor);
+    mesh.material = mat;
+
+    mesh.scaling = new BABYLON.Vector3(scaleFactor, scaleFactor, scaleFactor);
+  }
+
+  engine.runRenderLoop(() => scene.render());
+
+  return { load, apply };
+}
+
+const viewer1 = createViewer("viewer1");
+const viewer2 = createViewer("viewer2");
+const viewer3 = createViewer("viewer3");
+
+/* ------------------------------------------
+   STEP 1 — AI Generate or Upload
+------------------------------------------ */
+
+// THIS IS THE BUTTON HANDLER YOU ASKED ABOUT:
+document.getElementById("btnGenerate").onclick = async () => {
+  const promptEl = document.getElementById("aiPrompt");
+  const prompt = promptEl.value.trim();
+  if (!prompt) {
+    alert("Enter a prompt first");
+    return;
+  }
+
+  const btn = document.getElementById("btnGenerate");
+  btn.disabled = true;
+  btn.textContent = "Generating…";
+
+  try {
+    modelUrl = await generateWithMeshy(prompt);
+    fileName = "meshyResult.glb";
+
+    await viewer1.load(modelUrl, fileName);
+    document.getElementById("btnNext1").disabled = false;
+  } catch (e) {
+    alert("Meshy Error: " + e.message);
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Generate with AI";
+};
+
+document.getElementById("fileUpload").onchange = async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  modelUrl = URL.createObjectURL(file);
+  fileName = file.name;
+
+  await viewer1.load(modelUrl, fileName);
+  document.getElementById("btnNext1").disabled = false;
+};
+
+document.getElementById("btnNext1").onclick = async () => {
+  await viewer2.load(modelUrl, fileName);
+  go("step2");
+};
+
+/* ------------------------------------------
+   STEP 2 — Verify
+------------------------------------------ */
+document.getElementById("btnTryAgain").onclick = () => go("step1");
+
+document.getElementById("btnAccept").onclick = async () => {
+  await viewer3.load(modelUrl, fileName);
+  setupColorPicker();
+  setupSizeInputs();
+  go("step3");
+};
+
+/* ------------------------------------------
+   STEP 3 — Finalize
+------------------------------------------ */
+function setupColorPicker() {
+  const picker = document.getElementById("colorPicker");
+  picker.innerHTML = "";
+
+  COLORS.forEach(c => {
+    const sw = document.createElement("div");
+    sw.className = "color-swatch";
+    sw.style.background = c;
+    if (c === selectedColor) sw.classList.add("color-selected");
+
+    sw.onclick = () => {
+      selectedColor = c;
+      document.querySelectorAll(".color-swatch").forEach(el => {
+        el.classList.remove("color-selected");
+      });
+      sw.classList.add("color-selected");
+      viewer3.apply();
+    };
+
+    picker.appendChild(sw);
+  });
+}
+
+function setupSizeInputs() {
+  const w = document.getElementById("widthInput");
+  const h = document.getElementById("heightInput");
+  const l = document.getElementById("lengthInput");
+
+  function refresh() {
+    w.value = (baseDims.width  * scaleFactor).toFixed(1);
+    h.value = (baseDims.height * scaleFactor).toFixed(1);
+    l.value = (baseDims.length * scaleFactor).toFixed(1);
+  }
+  refresh();
+
+  function update(axis, value) {
+    const v = parseFloat(value);
+    if (!v || v <= 0) return;
+
+    scaleFactor = v / baseDims[axis];
+    refresh();
+    viewer3.apply();
+  }
+
+  w.oninput = () => update("width",  w.value);
+  h.oninput = () => update("height", h.value);
+  l.oninput = () => update("length", l.value);
+}
+
+document.getElementById("btnFinish").onclick = () => go("step4");
+
+</script>
+</body>
+</html>
