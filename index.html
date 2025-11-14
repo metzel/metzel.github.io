@@ -3,78 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <title>Dog Chew Toy Builder</title>
+
+<!-- Babylon.js -->
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
 <style>
     body {
         font-family: system-ui, sans-serif;
-        margin: 0;
-        padding: 20px;
-        background: #f7f7f7;
+        margin: 0; padding: 20px;
+        background: #f5f5f5;
     }
-
     h2 { margin-top: 0; }
-
     .step {
         display: none;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #ddd;
-        margin-bottom: 20px;
+        background:#fff; padding:20px;
+        border-radius:10px; border:1px solid #ddd;
+        margin-bottom:20px;
     }
-
-    .active { display: block; }
-
+    .active { display:block; }
     .btn {
-        padding: 10px 18px;
-        background: #1976d2;
-        border-radius: 30px;
-        color: white;
-        border: none;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 10px;
+        padding:10px 18px;
+        background:#1976d2;
+        color:#fff;
+        border:none; border-radius:30px;
+        cursor:pointer; font-weight:600;
+        margin-top:10px;
     }
-
-    .btn[disabled] {
-        background: #aaa;
-        cursor: not-allowed;
-    }
-
+    .btn[disabled] { background:#aaa; cursor:not-allowed; }
     .color-swatch {
-        width: 35px;
-        height: 35px;
-        border-radius: 6px;
-        cursor: pointer;
-        border: 2px solid transparent;
+        width:35px; height:35px; border-radius:6px;
+        cursor:pointer; border:2px solid transparent;
     }
-
-    .color-selected {
-        border: 3px solid black;
-    }
-
+    .color-selected { border:3px solid black; }
     canvas {
-        width: 100%;
-        height: 360px;
-        border-radius: 10px;
-        border: 1px solid #ccc;
+        width:100%; height:360px;
+        border-radius:10px; border:1px solid #ccc;
     }
-
 </style>
+
 </head>
 <body>
 
 <h1>Dog Chew Toy Builder</h1>
 
-<!-- ===================== -->
-<!-- STEP 1 – CHEW TOY BASE -->
-<!-- ===================== -->
+<!-- STEP 1 -->
 <div id="step1" class="step active">
     <h2>Step 1: Chew Toy Base</h2>
 
     <h3>AI Generator</h3>
-    <textarea id="aiPrompt" rows="4" style="width: 100%;"></textarea>
+    <textarea id="aiPrompt" rows="4" style="width:100%;"></textarea>
     <button id="btnGenerate" class="btn">Generate Toy</button>
 
     <h3>or Upload Your Own 3D Model</h3>
@@ -86,29 +64,22 @@
     <button id="btnNext1" class="btn" disabled>Next →</button>
 </div>
 
-
-<!-- ===================== -->
-<!-- STEP 2 – VERIFY -->
-<!-- ===================== -->
+<!-- STEP 2 -->
 <div id="step2" class="step">
     <h2>Step 2: Verify Your Toy</h2>
     <canvas id="viewer2"></canvas>
 
-    <br>
-    <button id="btnTryAgain" class="btn" style="background:#888;">← Try Again</button>
+    <button id="btnTryAgain" class="btn" style="background:#777;">← Try Again</button>
     <button id="btnAccept" class="btn">Accept →</button>
 </div>
 
-
-<!-- ===================== -->
-<!-- STEP 3 – FINALIZE -->
-<!-- ===================== -->
+<!-- STEP 3 -->
 <div id="step3" class="step">
     <h2>Step 3: Finalize Your Toy</h2>
 
     <h3>Save Your Design</h3>
     <label>Name Your Design</label><br>
-    <input id="designName" style="width: 100%; padding: 6px;">
+    <input id="designName" style="width:100%;padding:6px;">
 
     <h4>Allow others to purchase your chew toy in our marketplace</h4>
     <p>
@@ -116,14 +87,11 @@
         Users that purchase your design will be charged a $2.50 design fee that
         you will retain for each item sold.
     </p>
-    <label>
-        <input type="checkbox" id="marketplace"> Include in marketplace
-    </label>
+
+    <label><input type="checkbox" id="marketplace"> Include in marketplace</label>
 
     <h3>Choose Your Color</h3>
-    <div id="colorPicker" style="display:flex; gap:8px;">
-        <!-- Filled by script -->
-    </div>
+    <div id="colorPicker" style="display:flex; gap:8px;"></div>
 
     <h3>Size</h3>
     <label>Width (mm)</label><br>
@@ -138,16 +106,12 @@
     <h3>Preview</h3>
     <canvas id="viewer3"></canvas>
 
-    <button id="btnFinish" class="btn" style="margin-top:20px;">Finished →</button>
+    <button id="btnFinish" class="btn">Finished →</button>
 </div>
 
-
-<!-- ===================== -->
-<!-- STEP 4 – PAYMENT -->
-<!-- ===================== -->
+<!-- STEP 4 -->
 <div id="step4" class="step">
     <h2>Step 4: Payment</h2>
-    <p>This is a placeholder checkout form.</p>
 
     <input placeholder="Cardholder Name"><br><br>
     <input placeholder="Card Number"><br><br>
@@ -156,31 +120,29 @@
     <button class="btn">Submit Payment</button>
 </div>
 
-
 <script>
 /* ======================================================
    STATE
 ====================================================== */
-const MESHY_API_KEY = "YOUR_MESHY_API_KEY_HERE";
+const MESHY_API_KEY = "msy_4tOx5PZk50ICUGYvV03p6FlrqnvWz3V9hwig";
+
 let modelUrl = null;
-let baseDims = { width: 100, height: 100, length: 150 };
+let fileName = null;
 let scaleFactor = 1;
 let selectedColor = "#ff4b4b";
 
-const COLORS = [
-    "#ff4b4b","#2962ff","#2e7d32","#ffeb3b",
-    "#ff9800","#8e24aa","#000000","#ffffff"
-];
+const baseDims = { width:100, height:100, length:150 };
+const COLORS = ["#ff4b4b","#2962ff","#2e7d32","#ffeb3b","#ff9800","#8e24aa","#000000","#ffffff"];
 
 
 /* ======================================================
-   STEP SWITCHING
+   STEP SWITCHER
 ====================================================== */
-function go(step) {
-    ["step1","step2","step3","step4"].forEach(id=>{
-        document.getElementById(id).classList.remove("active");
+function go(id){
+    ["step1","step2","step3","step4"].forEach(s=>{
+        document.getElementById(s).classList.remove("active");
     });
-    document.getElementById(step).classList.add("active");
+    document.getElementById(id).classList.add("active");
 }
 
 
@@ -188,76 +150,81 @@ function go(step) {
    MESHY AI GENERATION
 ====================================================== */
 async function generateWithMeshy(prompt) {
-    const createRes = await fetch("https://api.meshy.ai/openapi/v2/text-to-3d", {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer " + MESHY_API_KEY,
-            "Content-Type": "application/json"
+    // create task
+    const create = await fetch("https://api.meshy.ai/openapi/v2/text-to-3d", {
+        method:"POST",
+        headers:{
+            "Authorization":"Bearer "+MESHY_API_KEY,
+            "Content-Type":"application/json"
         },
-        body: JSON.stringify({
-            mode: "preview",
+        body:JSON.stringify({
             prompt,
-            topology: "triangle",
-            symmetry_mode: "auto",
-            target_polycount: 30000,
-            ai_model: "latest",
-            art_style: "sculpture"
+            mode:"preview",
+            target_polycount:30000,
+            topology:"triangle",
+            symmetry_mode:"auto",
+            art_style:"sculpture",
+            ai_model:"latest"
         })
     });
 
-    const createJson = await createRes.json();
+    const createJson = await create.json();
     const taskId = createJson.result;
 
     // poll
-    while (true) {
-        await new Promise(r=>setTimeout(r, 4000));
-        const checkRes = await fetch("https://api.meshy.ai/openapi/v2/text-to-3d/" + taskId, {
-            headers: { "Authorization": "Bearer " + MESHY_API_KEY }
+    while(true){
+        await new Promise(r=>setTimeout(r,4000));
+
+        const res = await fetch("https://api.meshy.ai/openapi/v2/text-to-3d/"+taskId, {
+            headers:{ "Authorization":"Bearer "+MESHY_API_KEY }
         });
-        const data = await checkRes.json();
-        if (data.status === "SUCCEEDED") {
-            return data.model_urls.glb;
+        const info = await res.json();
+
+        if(info.status === "SUCCEEDED"){
+            return info.model_urls.glb;
         }
-        if (data.status === "FAILED") throw new Error("AI failed");
+        if(info.status === "FAILED"){
+            throw new Error("Meshy AI generation failed");
+        }
     }
 }
 
 
 /* ======================================================
-   BABYLON VIEWER SETUP
+   BABYLON VIEWER
 ====================================================== */
-function createViewer(canvasId) {
+function makeViewer(canvasId){
     const canvas = document.getElementById(canvasId);
-    const engine = new BABYLON.Engine(canvas, true);
-    const scene = new BABYLON.Scene(engine);
+    const engine = new BABYLON.Engine(canvas,true);
+    const scene  = new BABYLON.Scene(engine);
 
-    const camera = new BABYLON.ArcRotateCamera(
-        "cam", Math.PI/2, Math.PI/3, 4,
-        BABYLON.Vector3.Zero(), scene
-    );
-    camera.attachControl(canvas, true);
+    const camera = new BABYLON.ArcRotateCamera("cam", Math.PI/2, Math.PI/3, 4, BABYLON.Vector3.Zero(), scene);
+    camera.attachControl(canvas,true);
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0,1,0), scene);
 
-    let currentMesh = null;
+    let mesh = null;
 
-    async function loadModel(url) {
-        if (currentMesh) currentMesh.dispose();
+    async function load(url, fname){
+        if(mesh) mesh.dispose();
 
-        if (!url) {
-            // fallback
-            currentMesh = BABYLON.MeshBuilder.CreateTorusKnot("toy", {}, scene);
-        } else {
-            const result = await BABYLON.SceneLoader.ImportMeshAsync("", "", url, scene);
-            currentMesh = result.meshes[0];
+        let finalUrl = url;
+        if(fname){
+            finalUrl = url + "#" + fname;   // IMPORTANT FIX FOR FILE TYPE
         }
 
-        applyColorAndScale(currentMesh);
+        if(!url){
+            mesh = BABYLON.MeshBuilder.CreateTorusKnot("fallback",{radius:0.7,tube:0.25},scene);
+        } else {
+            const res = await BABYLON.SceneLoader.ImportMeshAsync("", "", finalUrl, scene);
+            mesh = res.meshes[0];
+        }
+        apply();
     }
 
-    function applyColorAndScale(mesh) {
-        if (!mesh) return;
+    function apply(){
+        if(!mesh) return;
 
-        let mat = new BABYLON.StandardMaterial("mat", scene);
+        let mat = new BABYLON.StandardMaterial("mat",scene);
         mat.diffuseColor = BABYLON.Color3.FromHexString(selectedColor);
         mesh.material = mat;
 
@@ -266,115 +233,124 @@ function createViewer(canvasId) {
 
     engine.runRenderLoop(()=>scene.render());
 
-    return {
-        loadModel: loadModel,
-        update: ()=>applyColorAndScale(currentMesh)
-    };
+    return { load, apply };
 }
 
-const viewer1 = createViewer("viewer1");
-const viewer2 = createViewer("viewer2");
-const viewer3 = createViewer("viewer3");
+const viewer1 = makeViewer("viewer1");
+const viewer2 = makeViewer("viewer2");
+const viewer3 = makeViewer("viewer3");
 
 
 /* ======================================================
-   STEP 1 LOGIC
+   STEP 1
 ====================================================== */
-document.getElementById("btnGenerate").onclick = async () => {
+document.getElementById("btnGenerate").onclick = async ()=>{
     const prompt = document.getElementById("aiPrompt").value.trim();
-    if (!prompt) return alert("Please enter a prompt");
+    if(!prompt) return alert("Enter prompt");
 
     document.getElementById("btnGenerate").disabled = true;
+
     try {
         modelUrl = await generateWithMeshy(prompt);
-        await viewer1.loadModel(modelUrl);
+        fileName = "ai.glb";
+        await viewer1.load(modelUrl, fileName);
+
         document.getElementById("btnNext1").disabled = false;
-    } catch (err) {
-        alert("Failed: " + err.message);
+    } catch(e){
+        alert("AI failed: "+e.message);
     }
+
     document.getElementById("btnGenerate").disabled = false;
 };
 
-document.getElementById("fileUpload").onchange = async (e) => {
+
+document.getElementById("fileUpload").onchange = async (e)=>{
     const file = e.target.files[0];
-    if (!file) return;
+    if(!file) return;
 
     modelUrl = URL.createObjectURL(file);
-    await viewer1.loadModel(modelUrl);
+    fileName = file.name;
+
+    await viewer1.load(modelUrl, fileName);
     document.getElementById("btnNext1").disabled = false;
 };
 
-document.getElementById("btnNext1").onclick = async () => {
-    await viewer2.loadModel(modelUrl);
+document.getElementById("btnNext1").onclick = async ()=>{
+    await viewer2.load(modelUrl, fileName);
     go("step2");
 };
 
 
 /* ======================================================
-   STEP 2 LOGIC
+   STEP 2
 ====================================================== */
 document.getElementById("btnTryAgain").onclick = ()=>go("step1");
 
 document.getElementById("btnAccept").onclick = async ()=>{
-    await viewer3.loadModel(modelUrl);
+    await viewer3.load(modelUrl, fileName);
+    setupColorPicker();
     setupSizeInputs();
     go("step3");
 };
 
 
 /* ======================================================
-   STEP 3 LOGIC
+   STEP 3
 ====================================================== */
-function setupColorPicker() {
-    const area = document.getElementById("colorPicker");
-    COLORS.forEach(col=>{
-        const div = document.createElement("div");
-        div.className = "color-swatch";
-        div.style.background = col;
-        if (col===selectedColor) div.classList.add("color-selected");
 
-        div.onclick = ()=>{
-            selectedColor = col;
-            document.querySelectorAll(".color-swatch").forEach(s=>s.classList.remove("color-selected"));
-            div.classList.add("color-selected");
-            viewer3.update();
+function setupColorPicker(){
+    const div = document.getElementById("colorPicker");
+    div.innerHTML = "";
+
+    COLORS.forEach(c=>{
+        const sw = document.createElement("div");
+        sw.className = "color-swatch";
+        sw.style.background = c;
+
+        if(c === selectedColor) sw.classList.add("color-selected");
+
+        sw.onclick = ()=>{
+            selectedColor = c;
+            document.querySelectorAll(".color-swatch")
+                .forEach(s=>s.classList.remove("color-selected"));
+            sw.classList.add("color-selected");
+            viewer3.apply();
         };
 
-        area.appendChild(div);
+        div.appendChild(sw);
     });
 }
 
-setupColorPicker();
-
-function setupSizeInputs() {
+function setupSizeInputs(){
     const w = document.getElementById("widthInput");
     const h = document.getElementById("heightInput");
     const l = document.getElementById("lengthInput");
 
-    w.value = baseDims.width * scaleFactor;
-    h.value = baseDims.height * scaleFactor;
-    l.value = baseDims.length * scaleFactor;
-
-    function updateDimension(axis, value) {
-        const base = baseDims[axis];
-        const numeric = parseFloat(value);
-        if (numeric <= 0) return;
-        scaleFactor = numeric / base;
-
-        w.value = (baseDims.width * scaleFactor).toFixed(1);
+    function refreshInputs(){
+        w.value = (baseDims.width  * scaleFactor).toFixed(1);
         h.value = (baseDims.height * scaleFactor).toFixed(1);
         l.value = (baseDims.length * scaleFactor).toFixed(1);
+    }
+    refreshInputs();
 
-        viewer3.update();
+    function changeDim(axis, value){
+        const num = parseFloat(value);
+        if(!num || num <= 0) return;
+
+        scaleFactor = num / baseDims[axis];
+        refreshInputs();
+        viewer3.apply();
     }
 
-    w.oninput = ()=>updateDimension("width", w.value);
-    h.oninput = ()=>updateDimension("height", h.value);
-    l.oninput = ()=>updateDimension("length", l.value);
+    w.oninput = ()=>changeDim("width",  w.value);
+    h.oninput = ()=>changeDim("height", h.value);
+    l.oninput = ()=>changeDim("length", l.value);
 }
+
 
 document.getElementById("btnFinish").onclick = ()=>go("step4");
 
 </script>
+
 </body>
 </html>
